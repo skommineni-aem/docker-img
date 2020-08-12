@@ -23,13 +23,13 @@ To start local demo AEM 6.4.8 instance on port 3502 on Mac iOS
 
 docker run --name author648-3502 \
 --env "AEM_RUNMODE=-Dsling.run.modes=author,crx3,crx3tar,dev" \
---mount type=bind,source="${PWD}/runtime/tf-platform/license.properties",target=/aem/license.properties \
+--mount type=bind,source="${PWD}/runtime/aem-instance/license.properties",target=/aem/license.properties \
 -p3502:8080 -d \
 -p30313:58242 -d \
 aemdesign/aem:6.4.8.0
 For windows: 
 
-docker run --name author648-3502 --env "AEM_RUNMODE=-Dsling.run.modes=author,crx3,crx3tar,dev" --mount type=bind,source="c:/Users/[myuserid]/runtime/tf-platform/licence.properties",target=/aem/license.properties -p3502:8080 -d -p30313:58242 -d aemdesign/aem:6.4.8.0
+docker run --name author648-3502 --env "AEM_RUNMODE=-Dsling.run.modes=author,crx3,crx3tar,dev" --mount type=bind,source="c:/Users/[myuserid]/runtime/aem-instance/licence.properties",target=/aem/license.properties -p3502:8080 -d -p30313:58242 -d aemdesign/aem:6.4.8.0
 
 
 *It will take a few min to start, be patient it may take 10min +/-
