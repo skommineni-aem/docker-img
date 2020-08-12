@@ -1,0 +1,71 @@
+ 
+
+Docker Desktop is an application for MacOS and Windows machines for the building and sharing of containerized applications and microservices.
+
+Get Docker Desktop at https://www.docker.com/products/docker-desktop
+
+We'll be using a predefined Docker image from to provide a base setup with everything needed to get started with the Adobe WKND tutorial. 
+
+This image is from AEMDesign, multiple AEM versions/configurations are available and can be seen on Github by looking at the branches, https://github.com/aem-design/docker-aem/tree/master
+
+Pull the version 6.4.8.0 image:
+
+docker pull aemdesign/aem:6.4.8.0
+
+
+Be sure to stop any other AEM instances on port 3502
+
+Be sure to have the path to your license.properties, and update the commands before running them
+
+
+
+To start local demo AEM 6.4.8 instance on port 3502 on Mac iOS
+
+docker run --name author648-3502 \
+--env "AEM_RUNMODE=-Dsling.run.modes=author,crx3,crx3tar,dev" \
+--mount type=bind,source="${PWD}/runtime/cmp/license.properties",target=/aem/license.properties \
+-p3502:8080 -d \
+-p30313:58242 -d \
+aemdesign/aem:6.4.8.0
+For windows: 
+
+docker run --name author648-3502 --env "AEM_RUNMODE=-Dsling.run.modes=author,crx3,crx3tar,dev" --mount type=bind,source="c:/Users/[myuserid]/runtime/cmp/licence.properties",target=/aem/license.properties -p3502:8080 -d -p30313:58242 -d aemdesign/aem:6.4.8.0
+
+
+*It will take a few min to start, be patient it may take 10min +/-
+
+Visit: http://localhost:3502/system/console/bundles
+
+username: admin 
+
+password: admin
+
+After all the packages have installed,  Visit http://localhost:3502/  to confirm its up and running.
+
+username: admin 
+
+password: admin
+
+to open a shell in the running docker container:
+
+docker container exec -it author648-3502 /bin/sh
+to exit the shell ctrl+p , ctrl+q. 
+
+
+
+to stop the container 
+
+docker container stop author648-3502
+
+
+Re-start/Start a stopped container
+
+docker container start author648-3502
+
+
+Shorthand commands explanation:
+-d, --detach                   Run container in background and print container ID
+-e, --env list                  Set environment variables
+-i, --interactive              Keep STDIN open even if not attached
+-p, --publish list            Publish a container's port(s) to the host
+-t, --tty                          Allocate a pseudo-TTY
