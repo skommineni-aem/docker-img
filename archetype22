@@ -1,0 +1,245 @@
+ 
+
+Note:  Avoid using dashes - in the maven archetype option values
+
+Prerequisite –
+
+Maven 3.3.9+ (https://confluence.amer.thermo.com/display/DCP/Maven)
+settings.xml needs to present in /.m2 folder in your root directory.
+ 
+
+Determine your archetype based on the AEM version you use, please refer to the below document for a better understanding.
+
+https://github.com/adobe/aem-project-archetype/blob/master/VERSIONS.md
+
+ AEM instance version: 6.4.2
+
+Archetype: 22 (-DarchetypeVersion)
+
+ 
+
+mvn archetype:generate -B \
+-DarchetypeGroupId=com.adobe.granite.archetypes \
+-DarchetypeArtifactId=aem-project-archetype \
+-DarchetypeVersion={ChangeMe} \
+-DgroupId={ChangeMe} \
+-Dversion={ChangeMe} \
+-DappsFolderName={ChangeMe} \
+-DartifactId={ChangeMe} \
+-Dpackage={ChangeMe} \
+-DartifactName="{ChangeMe}" \
+-DcomponentGroupName={ChangeMe} \
+-DconfFolderName={ChangeMe} \
+-DcontentFolderName={ChangeMe} \
+-DcssId={ChangeMe} \
+-DisSingleCountryWebsite={ChangeMe} \
+-Dlanguage_country={ChangeMe} \
+-DoptionAemVersion={ChangeMe} \
+-DoptionDispatcherConfig={ChangeMe} \
+-DoptionIncludeErrorHandler={ChangeMe} \
+-DoptionIncludeExamples={ChangeMe} \
+-DoptionIncludeFrontendModule={ChangeMe} \
+-DpackageGroup={ChangeMe} \
+-DsiteName="{ChangeMe}"
+
+Description of each property
+
+Name
+
+Values
+
+Description
+
+groupId
+
+com.thermofisher.wcm.corpcommons
+
+Base Maven groupId
+
+artifactId
+
+micromodule-corpcommons
+Base Maven ArtifactId
+
+version
+
+1.0.0-SNAPSHOT
+
+Version
+
+package
+
+com.thermofisher.wcm.corpcommons
+Java Source Package
+
+appsFolderName
+
+corpcommons
+/apps folder name
+
+artifactName
+
+Corporate Commons project
+
+Maven Project Name
+
+componentGroupName
+
+corpcommons
+AEM component group name
+
+contentFolderName
+
+corpcommons
+/content folder name
+
+confFolderName
+
+corpcommons
+/conf folder name
+
+cssId
+
+corpcommons
+prefix used in generated css
+
+packageGroup
+
+corpcommons
+Content Package Group name
+
+siteName
+
+corpcommons Project
+AEM site name
+
+optionAemVersion
+
+6.4.2
+
+Target AEM version
+
+language_country
+
+en_us
+
+language / country code to create the content structure from (e.g. en_us)
+
+optionIncludeExamples
+
+n
+
+Include a Component Library example site
+
+optionIncludeErrorHandler
+
+n
+
+Include a custom 404 response page
+
+optionIncludeFrontendModule
+
+y
+
+Include a dedicated frontend module
+
+isSingleCountryWebsite
+
+n
+
+Create language-master structure in example content
+
+optionDispatcherConfig
+
+none
+
+Generate a dispatcher configuration module
+
+ 
+
+After ran the command, it will create structure similar to as shown in below (Used Archetype 22)
+
+Content Engineering > Creating new Project Repo with Maven Archetype > Screen Shot 2020-06-10 at 9.23.58 AM.png
+
+Note: Structure will change depends on Archetype you mention in above command.
+
+
+
+Project  POM structure -
+
+Content Engineering > Creating new Project Repo with Maven Archetype > project-pom-structure.png
+
+ 
+
+Removing Core components dependency from code base
+
+Now, we have to remove the Core components dependencies from our project structure.
+
+Note: Only delete pom.xml files not in context.xml
+
+Content Engineering > Creating new Project Repo with Maven Archetype > Screen Shot 2020-06-10 at 9.26.59 AM.png
+
+Explanation: Core components are shared between multiple repos, so we want to keep that as independent, it will update based on the AEM version.
+
+Note: If we need in our /core folder, we can add manually.
+
+Ex: Added the following dependency in corpcommons code base.
+
+<dependency>
+	<groupId>com.adobe.cq</groupId>
+	<artifactId>core.wcm.components.core</artifactId>
+	<version>2.5.0</version>
+	<scope>provided</scope>
+</dependency>
+Create a new Parent folder and move your parent level pom.xml to that folder.
+After you move pom.xml made following changes in your parent pom.xml
+
+<modules>
+	<module>../config</module>
+	<module>../core</module>
+	<module>../ui.apps</module>
+	<module>../all</module>
+	<module>../it.tests</module>
+	<module>../it.launcher</module>
+</modules>
+Made following changes in your <parent> section of each submodule pom.xml –
+
+<relativePath>../parent/pom.xml</relativePath>
+Create .gitignore file in your project
+
+
+Refer the following link to update .gitignore -
+
+https://stash.thermofisher.com/projects/WCM/repos/micromodule-corpcommons/browse/README.md
+
+Clean-up process:
+Remove all java classes from /core and /it.tests folders except package-info.java.
+Remove Hello world component from /ui.apps folder.
+Remove content from /ui.content folder.
+Remove unnecessary filters from filter.xml in all modules of the project structure depends on the project goal. (Discuss with the team before doing this step).
+ 
+
+Note: Package.info needs to present in all the subfolders in /core otherwise remove VERSIONED in pom.xml
+
+-exportcontents: ${packages;VERSIONED}
+
+ 
+
+Follow the instructions in read me file to deploy in AEM instance, the Default port is 4502 and located in parent pom.xml
+Github - https://stash.thermofisher.com/projects/WCM/repos/micromodule-corpcommons/browse
+
+Useful Adobe documents 
+https://docs.adobe.com/content/help/en/experience-manager-learn/getting-started-wknd-tutorial-develop/project-setup.html 
+https://docs.adobe.com/content/help/en/experience-manager-core-components/using/developing/archetype/using.html
+https://docs.adobe.com/content/help/en/experience-manager-cloud-service/implementing/developing/aem-project-content-package-structure.html
+https://github.com/adobe/aem-project-archetype/issues/221
+
+
+There are a few important differences to the maven-bundle-plugin to consider while migrating:
+
+Packages are no longer automatically exported (but there is a handy directive for exporting all versioned packages)
+In-POM instructions are supported but need to be enclosed in a CDATA section
+Certain pom elements no longer end up automatically as manifest attributes (compare with bndtools/bnd#2447, supposed to be fixed with version 4.2)
+ 
+
+ 
