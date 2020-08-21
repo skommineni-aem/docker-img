@@ -1,0 +1,53 @@
+ 
+
+Wouldn’t it be great if you could append the ID from Jira to your BitBucket commits without having to constantly memorise ticket numbers, or repeatedly run git branch to check the ticket number and branch name? Fear not, Git Hooks to the rescue.
+
+First, set up a git template directory using the git config command.
+
+In this example we’re using the .git-templates folder we’ve created in our home directory:
+
+
+
+git config --global init.templatedir '~/.git-templates'
+
+
+Then create the hooks directory for global hooks in your template folder:
+
+
+
+mkdir -p ~/.git-templates/hooks
+create a file prepare-commit-msg
+
+touch ~/.git-templates/hooks/prepare-commit-msg
+Edit the file and paste in: 
+
+#!/bin/bash
+# Include any branches for which you wish to disable this script
+if [ -z "$BRANCHES_TO_SKIP" ]; then
+  BRANCHES_TO_SKIP=(master develop staging test)
+fi
+# Get the current branch name and check if it is excluded
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+BRANCH_EXCLUDED=$(printf "%s\n" "${BRANCHES_TO_SKIP[@]}" | grep -c "^$BRANCH_NAME$")
+# remove everything before the last forward slash
+BRANCH_NAME=$(echo $BRANCH_NAME | sed 's@.*/@@')
+# Trim it down to get the parts we're interested in
+TRIMMED=$(echo $BRANCH_NAME | sed -e 's:^\([^-]*-[^-]*\)-.*:\1:' -e \
+    'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/')
+# If it isn't excluded, preprend the trimmed branch identifier to the given message
+if [ -n "$BRANCH_NAME" ] &&  ! [[ $BRANCH_EXCLUDED -eq 1 ]]; then
+  sed -i.bak -e "1s/^/$TRIMMED /" $1
+fi
+
+
+Afterwards,  ensure permissions are correctly set on the file
+
+chmod a+x ~/.git-templates/hooks/prepare-commit-msg
+
+Done! Now whenever you run git commit, it will prepend the first segments of the branch to the commit message! For existing projects, you just need to reinit the git directory (don’t worry, it won’t break anything!) by running the following in the project root directory:
+
+git init
+
+
+
+ 
