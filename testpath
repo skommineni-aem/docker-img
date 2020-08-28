@@ -1,0 +1,102 @@
+package com.common.core.workflow;
+
+import com.adobe.granite.workflow.*;
+import com.adobe.granite.workflow.exec.*;
+import com.adobe.granite.workflow.metadata.*;
+import org.osgi.service.component.annotations.*;
+import org.osgi.service.metatype.annotations.*;
+import org.slf4j.*;
+
+import java.util.*;
+
+@Component(
+	service = {ParticipantStepChooser.class},
+	configurationPolicy = ConfigurationPolicy.REQUIRE,
+	property = {
+		"chooser.label=Path Based Participant Chooser",
+	}
+)
+@Designate(ocd = PathBasedParticipantChooser.Config.class)
+public class PathBasedParticipantChooser implements ParticipantStepChooser {
+
+	@ObjectClassDefinition(
+		name = "Path Based Participant Chooser",
+		description = "Participant Step that dynamically chooses the right group based on the path of the resource in the payload and the configured groups."
+	)
+
+	@interface Config {
+		@AttributeDefinition(
+			name = "Default Group",
+			description = "The group to assign the workflow to if the path is not explicitly mapped, e.g. ax-WCMapprovers"
+		)
+		String default_group() default "administrators";
+
+		@AttributeDefinition(
+			name = "Path Mapping",
+			description = "Maps paths in the JCR to user group IDs, e.g. /content/tf:ax-WCMapprovers",
+			cardinality = 100
+		)
+		String[] path_mapping();
+	}
+
+	private Config config;
+
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private List<String> pathMapping;
+	private String defaultGroup;
+
+	public String getParticipant(WorkItem workItem, WorkflowSession wfSession, MetaDataMap metaDataMap) throws WorkflowException {
+
+		final WorkflowData workflowData = workItem.getWorkflowData();
+		final String payloadPath = workflowData.getPayload().toString();
+		logger.debug("Payload Path: " + payloadPath);
+
+		String participant = getGroup(payloadPath);
+		logger.debug("Participant chosen: " + participant);
+		return participant;
+	}
+
+	@Activate
+	protected void activate(PathBasedParticipantChooser.Config config) {
+		this.config = config;
+		this.pathMapping = Arrays.asList(config.path_mapping());
+		this.defaultGroup = config.default_group();
+	}
+
+	/**
+	 * Breaks an array of strings into a map with a colon delimiter
+	 * @param mappings the array of colon-delimited strings
+	 * @return a map of keys and values created from the delimited strings
+	 */
+	private HashMap<String, String> breakMapping(List<String> mappings) {
+		HashMap<String, String> map = new HashMap<>();
+		for (String mapping: mappings) {
+			String[] pieces = mapping.split(":");
+			if (pieces.length > 1) {
+				map.put(pieces[0], pieces[1]);
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * Uses the given path to get the first group matched in the mapping
+	 * @param path the path to match
+	 * @return the first group with a matching mapping. If no group matches, it returns the
+	 *  default group
+	 */
+	private String getGroup(String path) {
+		String group = defaultGroup;
+
+		Map<String, String> map = breakMapping(pathMapping);
+		for (Map.Entry<String, String> entry: map.entrySet()) {
+			String mappedPath = entry.getKey();
+			if (path.contains(mappedPath)) {
+				group = entry.getValue();
+				break;
+			}
+		}
+		return group;
+	}
+
+}
